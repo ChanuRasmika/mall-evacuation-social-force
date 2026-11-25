@@ -232,7 +232,8 @@ Results are filled in from the notebook (Section 4).
 | V5 | Stability limit | amplification matrix gives $\omega\Delta t \le 2$ and $\gamma\Delta t \le 1$; $\Delta t$ below both limits; too-large steps fail | limits 2.000 and 1.000; margin ×6.6 (contact), ×1.9 (friction, 99 % of contacts), ×1.15 (deepest contact); $\Delta t$ = 0.1, 0.05, 0.02, 0.01 s fail at $N = 400$, $w = 0.6$ m, 0.005 s stable | ✅ |
 | V6 | Plausibility of exit flow | mean specific flow $J_s$ in [1.3, 2.31] m⁻¹ s⁻¹ (SFPE design value to largest value in [7]) for $w \ge 1.0$ m | $J_s$ = 1.37 (1.0 m), 1.45 (1.1 m), 1.57 (1.2 m). Below the band at 0.8–0.9 m (1.19–1.21), and below the experiments of [7] (1.61–2.31) at every width, so narrow-exit results are conservative | ✅ for $w \ge 1.0$ m |
 | X2 | Error scaling on log–log axes | integrator: slope ≈ 2 (Euler ≈ 1); Monte Carlo s.e.: slope ≈ −1/2 | slopes 2.000 (Euler 1.011); measured error / predicted = 1.00; Monte Carlo slope −0.53 | ✅ |
-| X3 | Blocked exit | zero flow through the blocked exit; conservation holds | *pending* | — |
+| X3 | Blocked exit | zero flow through the blocked exit; conservation holds | 180 blocked-exit runs ($N$ = 100–300, $w$ = 1.2–2.0 m): nobody out through the blocked exit, all runs cleared, $N_\text{inside} + N_\text{out} = N$ at every step | ✅ |
+| X6 | Cost scaling of the force evaluation (1 person/m²) | cell lists $\approx O(N)$, brute force $\approx O(N^2)$; cell lists faster for $N \ge 400$ | fitted exponents 1.13 (cell lists) and 1.95 (brute force); 36× faster at $N = 1200$; compiled code about 100× faster than plain Python | ✅ |
 
 ![Verification plot](figures/verification_relaxation.png)
 
