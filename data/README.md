@@ -34,4 +34,4 @@ To regenerate the file, set `QUICK_MODE = False` in the notebook's first code ce
 
 ## `results_sensitivity.csv`
 
-140 rows at $N = 600$, $w = 1.25$ m, 20 seeds each: the reference configuration (`factor` = `reference`) and one input changed at a time (`factor` = `v0_mean`, `tau` or `a_rep`, with the value in `level`; m/s, s and N respectively). Runs stop at 600 s. Other columns as in `results_main.csv`.
+140 rows at $N = 600$, $w = 1.25$ m, 20 seeds each: the reference configuration (`factor` = `reference`) and one input changed at a time (`factor` = `v0_mean`, `tau` or `a_rep`, with the value in `level`; m/s, s and N respectively). Runs stop at 600 s. Other columns as in `results_main.csv`. All runs use `dt` = 0.0025 s except 3 of the 20 runs at `tau` = 0.3, which failed a per-step check and were repeated at 0.00125 s.

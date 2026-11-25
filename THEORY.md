@@ -112,7 +112,7 @@ $D$ is computed once per geometry (once per exit width, or blocked-exit case) on
 
 | Symbol | Meaning | Units | Value / range | Source |
 |---|---|---|---|---|
-| $N$ | number of occupants | persons | 100, 200, 300, 400, 600, 800 | assumed |
+| $N$ | number of occupants | persons | 100, 200, 300, 400, 500, 600, 700, 800 | assumed |
 | $w$ | width of each exit | m | six per $N$, 0.85–1.6 (placed by a pilot run) | assumed |
 | $m_i$ | mass | kg | 80 | [2] |
 | $\tau$ | relaxation time | s | 0.5 | [2] |
@@ -127,7 +127,7 @@ $D$ is computed once per geometry (once per exit width, or blocked-exit case) on
 | $h$ | distance-map grid spacing | m | 0.1 | chosen |
 | $r_\text{band}$ | width of the costly band along walls and shop edges | m | 0.35 | $= \max r_i$ |
 | $c_\text{band}$ | cost per metre inside the band, relative to open floor | — | 5 | chosen |
-| $\Delta t$ | time step | s | 0.005 for $N \le 400$, 0.0025 for $N \ge 600$ (stability limit and convergence checked, V4, V5) | §4.3 |
+| $\Delta t$ | time step | s | 0.005 for $N \le 400$, 0.0025 for $N > 400$ (stability limit and convergence checked, V4, V5) | §4.3 |
 | $T_\text{max}$ | simulation time limit | s | 600 | assumed |
 | $T_\text{target}$ | evacuation target | s | 180 | assumed |
 | $R$ | replications (seeds) per scenario | — | ≥ 20 (full), fewer in quick mode | §4.4 |
@@ -196,7 +196,7 @@ Applied to the model:
 - V4 shows that trajectories converge, and finds no detectable bias in the evacuation-time statistics against $\Delta t/2$.
 - Every production run passes the per-step checks.
 
-**Larger crowds.** At $N$ = 600–800 the crowd behind each exit pushes harder, and contacts get deeper. At 0.005 s some of these runs failed a per-step check (a person pushed through a wall), so these crowds use $\Delta t = 0.0025$ s. As a safety net, any sweep run that still fails a check is repeated with the step halved, and the step used is stored with every result (notebook §5.3). By V4b, the two steps give the same evacuation-time statistics to within a few per cent.
+**Larger crowds.** At $N$ = 600–800 the crowd behind each exit pushes harder, and contacts get deeper. At 0.005 s some of these runs failed a per-step check (a person pushed through a wall), so every crowd of more than 400 people uses $\Delta t = 0.0025$ s. As a safety net, any sweep run that still fails a check is repeated with the step halved, and the step used is stored with every result (notebook §5.3). By V4b, the two steps give the same evacuation-time statistics to within a few per cent.
 
 *Note on convergence of a many-body system.* Crowd dynamics are chaotic: tiny differences (such as a change in $\Delta t$) eventually change the order in which people pass through an exit. Individual trajectories are therefore not expected to converge pointwise over a whole evacuation. Pointwise order is measured on the single-pedestrian test (V1, X2). For the full crowd, convergence is assessed in two ways (V4): trajectories over a short horizon (5 s), and the **distribution** of $T_\text{evac}$ and of the mean exit time over seeds at $2\Delta t$, $\Delta t$ and $\Delta t/2$. Over 5 s, free walkers (no contacts) converge at order 2.1. With contacts the order falls to about 1, because the contact force has a kink, $g(x) = \max(x, 0)$, where two bodies touch.
 
@@ -233,7 +233,7 @@ Results are filled in from the notebook (Section 4).
 | V6 | Plausibility of exit flow | mean specific flow $J_s$ in [1.3, 2.31] m⁻¹ s⁻¹ (SFPE design value to largest value in [7]) for $w \ge 1.0$ m | $J_s$ = 1.37 (1.0 m), 1.45 (1.1 m), 1.57 (1.2 m). Below the band at 0.8–0.9 m (1.19–1.21), and below the experiments of [7] (1.61–2.31) at every width, so narrow-exit results are conservative | ✅ for $w \ge 1.0$ m |
 | X2 | Error scaling on log–log axes | integrator: slope ≈ 2 (Euler ≈ 1); Monte Carlo s.e.: slope ≈ −1/2 | slopes 2.000 (Euler 1.011); measured error / predicted = 1.00; Monte Carlo slope −0.53 | ✅ |
 | X3 | Blocked exit | zero flow through the blocked exit; conservation holds | 180 blocked-exit runs ($N$ = 100–300, $w$ = 1.2–2.0 m): nobody out through the blocked exit, all runs cleared, $N_\text{inside} + N_\text{out} = N$ at every step | ✅ |
-| X6 | Cost scaling of the force evaluation (1 person/m²) | cell lists $\approx O(N)$, brute force $\approx O(N^2)$; cell lists faster for $N \ge 400$ | fitted exponents 1.13 (cell lists) and 1.95 (brute force); 36× faster at $N = 1200$; compiled code about 100× faster than plain Python | ✅ |
+| X6 | Cost scaling of the force evaluation (1 person/m²) | cell lists $\approx O(N)$, brute force $\approx O(N^2)$; cell lists faster for $N \ge 400$ | fitted exponents 1.15 (cell lists) and 1.95 (brute force); 35× faster at $N = 1200$; compiled code about 100× faster than plain Python | ✅ |
 
 ![Verification plot](figures/verification_relaxation.png)
 
