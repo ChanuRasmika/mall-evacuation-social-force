@@ -74,7 +74,7 @@ where
 
 The exponential term is a soft "personal-space" repulsion that acts before contact.
 
-**Pedestrian–wall force** [2]. Walls are line segments: the outer walls, with gaps at the exits, and the edges of every shop block. For each segment $W$, let $d_{iW}$ be the distance from $\mathbf{x}_i$ to the closest point on the segment, $\mathbf{n}_{iW}$ the unit vector from that point to $\mathbf{x}_i$, and $\mathbf{t}_{iW}$ the unit tangent. Then
+**Pedestrian–wall force** [2]. The obstacles are the outer wall segments, with gaps at the exits, and the shop blocks. Each shop block is treated as **one** rectangular obstacle rather than four separate edges: just off a convex corner both edges have the same closest point (the corner), so separate edges would count that corner twice. For each obstacle $W$, let $d_{iW}$ be the distance from $\mathbf{x}_i$ to the closest point on it, $\mathbf{n}_{iW}$ the unit vector from that point to $\mathbf{x}_i$, and $\mathbf{t}_{iW}$ the unit tangent. Then
 
 $$
 \mathbf{f}_{iW} = \Big[ A\, e^{(r_i - d_{iW})/B} + k\, g(r_i - d_{iW}) \Big]\,\mathbf{n}_{iW}
@@ -167,7 +167,7 @@ $$
 
 so $r_c = 2 r_\text{max} + s_c \approx 0.70 + 0.61 \approx 1.3$ m. The neglected force (< 1 N per neighbour) is under 0.5 % of a typical driving force ($m v^0/\tau \approx 214$ N).
 
-The floor is divided into square cells of side $\ell \ge r_c$ (the cell-list method [5]), and each person is assigned to a cell. Forces are then summed only over the 3 × 3 block of cells around each person, which makes the cost per step $O(N)$. The cell lists are rebuilt every step, which is cheap. The cell-list forces are checked against a brute-force $O(N^2)$ sum (V3). Walls use the same cut-off.
+The floor, together with the 1 m strips outside the exits, is divided into cells of side $\ell \ge r_c$ (the cell-list method [5]): 32 × 23 cells of 1.31 m × 1.30 m. Each person still inside is assigned to a cell (people outside the grid are clamped into the edge cells, which keeps every pair within $r_c$ in neighbouring cells). Forces are then summed only over the 3 × 3 block of cells around each person, which makes the cost per step $O(N)$. The cell lists are rebuilt every step by counting sort, which is cheap: a 400-person step takes about 0.1 ms in compiled code. The cell-list forces are checked against a brute-force $O(N^2)$ sum (V3). Walls use the same cut-off.
 
 ### 4.3 Stability and choice of time step
 
@@ -200,7 +200,9 @@ Its half-width shrinks like $R^{-1/2}$, which is also shown empirically. Seeds a
 
 ### 4.5 Exits and bookkeeping
 
-A person is removed once they are 0.5 m beyond an exit line, and the evacuation time for that exit is recorded. At every step $N_\text{inside} + N_\text{out} = N$ (V2).
+A person is removed once they are 0.5 m beyond an exit line, and their exit time and exit are recorded. At every step $N_\text{inside} + N_\text{out} = N$ (V2). The same per-step check also stops the run if a position becomes non-finite or if anyone is outside the floor anywhere other than an open exit gap, so nobody can pass through a wall or a blocked exit unnoticed.
+
+**Common random numbers.** Replication $k$ uses seed $1000 + k$ in every scenario. The free floor does not depend on the exit width, so a given seed produces the same starting crowd for every $w$, and widths are compared on identical crowds.
 
 ## 5. Verification
 
@@ -209,8 +211,9 @@ Results are filled in from the notebook (Section 4).
 | ID | Check | Expected | Obtained | Pass? |
 |---|---|---|---|---|
 | V1 | Single pedestrian from rest in open space vs $v(t) = v_0(1 - e^{-t/\tau})$ | max error < $10^{-3}$ m/s at $\Delta t = 0.01$ s (predicted $8.2 \times 10^{-5}$) | speed $8.2 \times 10^{-5}$ m/s, position $6.7 \times 10^{-5}$ m; explicit Euler $5.0 \times 10^{-3}$ m/s (fails, as intended) | ✅ |
-| V2 | Conservation of people | $N_\text{inside} + N_\text{out} = N$ at every step of every run | *pending* | — |
-| V3 | Cell-list forces vs brute-force $O(N^2)$ forces | equal to relative tolerance $10^{-10}$ | *pending* | — |
+| V1b | Compiled crowd step and direction lookup vs the tested Python versions | agree to $10^{-12}$ | max difference 0 (identical) over 5 s and at 5000 points | ✅ |
+| V2 | Conservation of people | $N_\text{inside} + N_\text{out} = N$ at every step of every run | holds at every step of every run (checked inside the time loop); e.g. 9356 steps for $N = 400$ | ✅ |
+| V3 | Cell-list forces vs brute-force $O(N^2)$ forces | equal to relative tolerance $10^{-10}$ | max difference $7 \times 10^{-12}$ m s⁻² against accelerations up to $5 \times 10^4$ m s⁻² (dense crowd, 1899 interacting pairs) | ✅ |
 | V4 | Time-step convergence of mean $T_\text{evac}$ at $\Delta t$, $\Delta t/2$, $\Delta t/4$ | differences shrink; $\Delta t$ result within CI of $\Delta t/4$ | *pending* | — |
 | V5 | Stability limit | $\Delta t$ above the bound in §4.3 gives overlaps / exploding speeds | *pending* | — |
 | V6 | Plausibility of exit flow | specific flow $J_s$ within the range measured in bottleneck experiments [7], [8] | *pending* | — |
