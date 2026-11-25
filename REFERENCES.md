@@ -18,7 +18,7 @@ IEEE style. The numbering matches the citations in [THEORY.md](THEORY.md) and th
 5. M. P. Allen and D. J. Tildesley, *Computer Simulation of Liquids*, 2nd ed. Oxford, U.K.: Oxford Univ. Press, 2017.
    *Used for:* the cell-list neighbour search and interaction cut-offs.
 6. E. W. Dijkstra, "A note on two problems in connexion with graphs," *Numer. Math.*, vol. 1, pp. 269–271, 1959, doi: [10.1007/BF01386390](https://doi.org/10.1007/BF01386390).
-   *Used for:* the shortest-distance map that gives each person's walking route.
+   *Used for:* the node-acceptance order of the distance-map computation (fast marching extends it).
 
 ## Validation data
 
@@ -31,3 +31,8 @@ IEEE style. The numbering matches the citations in [THEORY.md](THEORY.md) and th
 
 9. A. M. Law, *Simulation Modeling and Analysis*, 5th ed. New York, NY, USA: McGraw-Hill, 2015.
    *Used for:* independent replications and t-based confidence intervals.
+
+## Distance-map method
+
+10. J. A. Sethian, "A fast marching level set method for monotonically advancing fronts," *Proc. Natl. Acad. Sci. USA*, vol. 93, no. 4, pp. 1591–1595, 1996, doi: [10.1073/pnas.93.4.1591](https://doi.org/10.1073/pnas.93.4.1591).
+   *Used for:* the fast marching method that computes the walking-distance map and each person's route.

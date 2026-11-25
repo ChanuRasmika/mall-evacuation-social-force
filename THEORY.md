@@ -91,13 +91,13 @@ $$
 \lVert \nabla D \rVert = 1 \ \text{in free space}, \qquad D = 0 \ \text{at the exits},
 $$
 
-with obstacles treated as impassable. The desired direction is the steepest-descent direction:
+with shop blocks impassable. The desired direction is the steepest-descent direction:
 
 $$
 \mathbf{e}_i^0 = -\frac{\nabla D(\mathbf{x}_i)}{\lVert \nabla D(\mathbf{x}_i) \rVert}.
 $$
 
-$D$ is computed once per geometry (once per exit width, or blocked-exit case) on a grid of spacing $h$. Obstacles are inflated by the maximum body radius so routes keep clear of corners. The calculation is a multi-source Dijkstra shortest-path search [6] from all exit cells on an 8-connected grid. $\nabla D$ is evaluated by central differences, and $\mathbf{e}^0$ is bilinearly interpolated at each person's position. Inside the exit doorway, $\mathbf{e}^0$ is the outward normal of the exit.
+$D$ is computed once per geometry (once per exit width, or blocked-exit case) on a grid of spacing $h$, with the fast marching method [10] started from the exit cells. Fast marching accepts nodes in order of increasing $D$, as Dijkstra's algorithm does [6], but computes each value from an upwind finite-difference solution of the eikonal equation. This matters: a first version used Dijkstra on an 8-connected grid, whose distances are sums of grid steps, and its directions snapped to multiples of 22.5° (next to a wall it pointed into the wall). A band of width $r_\text{band} = 0.35$ m (the largest body radius) along every wall and shop edge costs $c_\text{band} = 5$ times as much per metre, so routes keep a body radius off the walls, while $D$ stays defined wherever a person's centre can be. The band is passable, so it can never close an exit, however narrow. The exit sources are trimmed to $|y - y_\text{exit}| \le \max(w/2 - r_\text{band}, 0)$, so people aim through the part of the gap their body fits through. $\nabla D$ is evaluated by central differences, and $\mathbf{e}^0$ is bilinearly interpolated at each person's position. Inside the exit doorway, $\mathbf{e}^0$ is the outward normal of the exit.
 
 ### 3.3 Input model (random variates)
 
@@ -125,6 +125,8 @@ $D$ is computed once per geometry (once per exit width, or blocked-exit case) on
 | $\kappa$ | sliding-friction coefficient | kg m⁻¹ s⁻¹ | $2.4 \times 10^{5}$ | [2] |
 | $r_c$ | interaction cut-off (centre to centre) | m | 1.3 | derived (§4.2) |
 | $h$ | distance-map grid spacing | m | 0.1 | chosen |
+| $r_\text{band}$ | width of the costly band along walls and shop edges | m | 0.35 | $= \max r_i$ |
+| $c_\text{band}$ | cost per metre inside the band, relative to open floor | — | 5 | chosen |
 | $\Delta t$ | time step | s | 0.01 (confirmed by convergence study) | §4.3 |
 | $T_\text{max}$ | simulation time limit | s | 600 | assumed |
 | $T_\text{target}$ | evacuation target | s | 180 | assumed |
@@ -145,7 +147,7 @@ $$
 \end{aligned}
 $$
 
-**Why a predictor.** In standard Velocity-Verlet the force depends only on position. Here the driving force and the friction force also depend on **velocity**, so $\mathbf{a}_{n+1}$ would need the unknown $\mathbf{v}_{n+1}$, which would make the scheme implicit. The predictor $\tilde{\mathbf{v}}$ (an Euler estimate) keeps it explicit. For the velocity update this is Heun's method (explicit trapezoidal rule), which is **second-order accurate**: local error $O(\Delta t^3)$, global error $O(\Delta t^2)$.
+**Why a predictor.** In standard Velocity-Verlet the force depends only on position. Here the driving force and the friction force also depend on **velocity**, so $\mathbf{a}_{n+1}$ would need the unknown $\mathbf{v}_{n+1}$, which would make the scheme implicit. The predictor $\tilde{\mathbf{v}}$ (an Euler estimate) keeps it explicit. The acceleration $\mathbf{a}_{n+1}$, computed at the predicted velocity, is reused as $\mathbf{a}_n$ in the next step, so each step needs only **one** force evaluation. The scheme is therefore close to, but not exactly, Heun's method (explicit trapezoidal rule). It is still **second-order accurate**: local error $O(\Delta t^3)$, global error $O(\Delta t^2)$.
 
 **Accuracy on the analytic test case.** For one person in open space, $\mathbf{e}^0$ is constant and the motion reduces to $\dot v = (v_0 - v)/\tau$, with exact solution
 
@@ -153,7 +155,7 @@ $$
 v(t) = v_0\left(1 - e^{-t/\tau}\right).
 $$
 
-Applied to this equation, the scheme multiplies the error each step by the Heun amplification factor $R(z) = 1 + z + z^2/2$ with $z = -\Delta t/\tau$. That factor matches $e^{z}$ to $O(z^3)$, so halving $\Delta t$ should cut the global error by a factor of about 4. This is verified on a log–log plot (V1, X2).
+Applied to this equation, with $z = -\Delta t/\tau$, the scheme multiplies the error each step by the main root of $\lambda^2 - (1 + \tfrac32 z)\lambda + \tfrac12 z = 0$, which is $\lambda = 1 + z + \tfrac12 z^2 - \tfrac14 z^3 + O(z^4)$; the other root is about $z/2$ and decays immediately. $\lambda$ matches $e^{z}$ up to $z^2$, so the local error is $\tfrac{5}{12}|z|^3$ (Heun's method would give $\tfrac16|z|^3$), and halving $\Delta t$ should cut the global error by a factor of 4. The accumulated speed error peaks at $t = \tau$ at about $v_0(\Delta t/\tau)^2 \cdot 5/(12e) \approx 8.2 \times 10^{-5}$ m/s for $\Delta t = 0.01$ s. This is verified on a log–log plot (V1, X2).
 
 ### 4.2 Neighbour search: cell lists
 
@@ -202,11 +204,11 @@ A person is removed once they are 0.5 m beyond an exit line, and the evacuation 
 
 ## 5. Verification
 
-Results are filled in from the notebook (Section 5).
+Results are filled in from the notebook (Section 4).
 
 | ID | Check | Expected | Obtained | Pass? |
 |---|---|---|---|---|
-| V1 | Single pedestrian from rest in open space vs $v(t) = v_0(1 - e^{-t/\tau})$ | max error < $10^{-3}$ m/s at $\Delta t = 0.01$ s | *pending* | — |
+| V1 | Single pedestrian from rest in open space vs $v(t) = v_0(1 - e^{-t/\tau})$ | max error < $10^{-3}$ m/s at $\Delta t = 0.01$ s (predicted $8.2 \times 10^{-5}$) | speed $8.2 \times 10^{-5}$ m/s, position $6.7 \times 10^{-5}$ m; explicit Euler $5.0 \times 10^{-3}$ m/s (fails, as intended) | ✅ |
 | V2 | Conservation of people | $N_\text{inside} + N_\text{out} = N$ at every step of every run | *pending* | — |
 | V3 | Cell-list forces vs brute-force $O(N^2)$ forces | equal to relative tolerance $10^{-10}$ | *pending* | — |
 | V4 | Time-step convergence of mean $T_\text{evac}$ at $\Delta t$, $\Delta t/2$, $\Delta t/4$ | differences shrink; $\Delta t$ result within CI of $\Delta t/4$ | *pending* | — |
@@ -215,7 +217,7 @@ Results are filled in from the notebook (Section 5).
 | X2 | Convergence order (log–log, single pedestrian) | slope ≈ 2 | *pending* | — |
 | X3 | Blocked exit | zero flow through the blocked exit; conservation holds | *pending* | — |
 
-![Verification plot](figures/verification.png)
+![Verification plot](figures/verification_relaxation.png)
 
 ## 6. Concepts applied
 
@@ -225,7 +227,7 @@ Results are filled in from the notebook (Section 5).
 | Numerical ODE solvers | Newton's equations integrated with Velocity-Verlet / Heun; stability limits from contact stiffness and friction; second-order convergence measured on a log–log plot (§4.1, §4.3) |
 | Input modelling and random variate generation | Truncated-normal desired speeds by rejection, uniform radii by inverse transform, non-overlapping random start positions (§3.3) |
 | Monte Carlo and the law of large numbers | Independent replications per scenario, t-based 95 % confidence intervals, $R^{-1/2}$ shrinking of the CI half-width (§4.4) |
-| Shortest-path computation | Multi-source Dijkstra on a grid to approximate the eikonal distance field that gives each person's route (§3.2) |
+| Shortest-path computation | Fast marching solution of the eikonal equation on a grid, giving the distance field and each person's route (§3.2) |
 
 ## 7. References
 
@@ -240,3 +242,4 @@ Cited here by number; full list in [REFERENCES.md](REFERENCES.md).
 7. A. Seyfried, O. Passon, B. Steffen, M. Boltes, T. Rupprecht and W. Klingsch, "New insights into pedestrian flow through bottlenecks," *Transp. Sci.*, vol. 43, no. 3, pp. 395–406, 2009, doi: 10.1287/trsc.1090.0263.
 8. T. Kretz, A. Grünebohm and M. Schreckenberg, "Experimental study of pedestrian flow through a bottleneck," *J. Stat. Mech.*, vol. 2006, P10014, 2006, doi: 10.1088/1742-5468/2006/10/P10014.
 9. A. M. Law, *Simulation Modeling and Analysis*, 5th ed. New York, NY, USA: McGraw-Hill, 2015.
+10. J. A. Sethian, "A fast marching level set method for monotonically advancing fronts," *Proc. Natl. Acad. Sci. USA*, vol. 93, no. 4, pp. 1591–1595, 1996, doi: 10.1073/pnas.93.4.1591.

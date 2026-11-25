@@ -35,7 +35,7 @@ jupyter notebook notebook/mall-evacuation-social-force.ipynb
 
 [How you know the numbers are right: the check(s) you ran and the result, e.g. "the simulated mean wait matches the analytic M/M/1 value to within 2%".]
 
-![Verification plot](figures/verification.png)
+![Verification plot](figures/verification_relaxation.png)
 
 ## Concepts applied
 
