@@ -4,7 +4,7 @@
 
 **System.** One floor of a shopping mall, modelled as a 2D region $\Omega = [0, 40] \times [0, 30]$ m. The floor is bounded by walls and contains several rectangular shop blocks that people cannot walk through. There are **two exits of equal width $w$**: one in the middle of the west wall and one in the middle of the east wall. At $t = 0$, $N$ people stand at random positions on the free floor and start evacuating.
 
-**Question.** How wide must the exits be for the floor to empty within a target time $T_\text{target} = 180$ s, as the number of occupants rises from $N = 100$ to $N = 400$? Does the required width grow faster than occupancy?
+**Question.** How wide must the exits be for the floor to empty within a target time $T_\text{target} = 180$ s, as the number of occupants rises from $N = 100$ to $N = 400$? Does the required width grow faster than occupancy? (A pilot run showed that up to $N = 400$ the width is set mainly by passability, so the study extends to $N = 800$.)
 
 **Quantities of interest** (each one computed for every replication $r = 1, \dots, R$):
 
@@ -112,8 +112,8 @@ $D$ is computed once per geometry (once per exit width, or blocked-exit case) on
 
 | Symbol | Meaning | Units | Value / range | Source |
 |---|---|---|---|---|
-| $N$ | number of occupants | persons | 100, 200, 300, 400 | assumed |
-| $w$ | width of each exit | m | swept (initially 1.0–3.0) | assumed |
+| $N$ | number of occupants | persons | 100, 200, 300, 400, 600, 800 | assumed |
+| $w$ | width of each exit | m | six per $N$, 0.85–1.6 (placed by a pilot run) | assumed |
 | $m_i$ | mass | kg | 80 | [2] |
 | $\tau$ | relaxation time | s | 0.5 | [2] |
 | $v_i^0$ | desired walking speed | m s⁻¹ | $\mathcal{N}(1.34,\,0.26^2)$, truncated | [1] |
@@ -127,7 +127,7 @@ $D$ is computed once per geometry (once per exit width, or blocked-exit case) on
 | $h$ | distance-map grid spacing | m | 0.1 | chosen |
 | $r_\text{band}$ | width of the costly band along walls and shop edges | m | 0.35 | $= \max r_i$ |
 | $c_\text{band}$ | cost per metre inside the band, relative to open floor | — | 5 | chosen |
-| $\Delta t$ | time step | s | 0.01 (confirmed by convergence study) | §4.3 |
+| $\Delta t$ | time step | s | 0.005 for $N \le 400$, 0.0025 for $N \ge 600$ (stability limit and convergence checked, V4, V5) | §4.3 |
 | $T_\text{max}$ | simulation time limit | s | 600 | assumed |
 | $T_\text{target}$ | evacuation target | s | 180 | assumed |
 | $R$ | replications (seeds) per scenario | — | ≥ 20 (full), fewer in quick mode | §4.4 |
@@ -155,7 +155,7 @@ $$
 v(t) = v_0\left(1 - e^{-t/\tau}\right).
 $$
 
-Applied to this equation, with $z = -\Delta t/\tau$, the scheme multiplies the error each step by the main root of $\lambda^2 - (1 + \tfrac32 z)\lambda + \tfrac12 z = 0$, which is $\lambda = 1 + z + \tfrac12 z^2 - \tfrac14 z^3 + O(z^4)$; the other root is about $z/2$ and decays immediately. $\lambda$ matches $e^{z}$ up to $z^2$, so the local error is $\tfrac{5}{12}|z|^3$ (Heun's method would give $\tfrac16|z|^3$), and halving $\Delta t$ should cut the global error by a factor of 4. The accumulated speed error peaks at $t = \tau$ at about $v_0(\Delta t/\tau)^2 \cdot 5/(12e) \approx 8.2 \times 10^{-5}$ m/s for $\Delta t = 0.01$ s. This is verified on a log–log plot (V1, X2).
+Applied to this equation, with $z = -\Delta t/\tau$, the scheme multiplies the error each step by the main root of $\lambda^2 - (1 + \tfrac32 z)\lambda + \tfrac12 z = 0$, which is $\lambda = 1 + z + \tfrac12 z^2 - \tfrac14 z^3 + O(z^4)$; the other root is about $z/2$ and decays immediately. $\lambda$ matches $e^{z}$ up to $z^2$, so the local error is $\tfrac{5}{12}|z|^3$ (Heun's method would give $\tfrac16|z|^3$), and halving $\Delta t$ should cut the global error by a factor of 4. The accumulated speed error peaks at $t = \tau$ at about $v_0(\Delta t/\tau)^2 \cdot 5/(12e) \approx 2.1 \times 10^{-5}$ m/s for the production step $\Delta t = 0.005$ s. This is verified on a log–log plot (V1, X2).
 
 ### 4.2 Neighbour search: cell lists
 
@@ -173,19 +173,32 @@ The floor, together with the 1 m strips outside the exits, is divided into cells
 
 The scheme is explicit, so $\Delta t$ must resolve the fastest time scales in the model.
 
-1. **Driving-force relaxation.** For $\dot v = (v_0 - v)/\tau$, Heun's method is stable for $|R(z)| \le 1$, i.e. $\Delta t \le 2\tau = 1$ s. This is never the binding limit.
+The stability limits of *this* scheme follow from its amplification matrix: one step maps $(x_n, v_n, a_n)$ to $(x_{n+1}, v_{n+1}, a_{n+1})$, and the scheme is stable while the spectral radius of that $3 \times 3$ matrix is at most 1. Evaluated on two linear test problems (computed numerically in V5):
+
+- undamped oscillation $\ddot x = -\omega^2 x$: stable for $\omega\,\Delta t \le 2$;
+- pure damping $\dot v = -\gamma v$: stable for $\gamma\,\Delta t \le 1$. The characteristic equation $\lambda^2 - (1 + \tfrac32 z)\lambda + \tfrac12 z = 0$ of §4.1 has the root $\lambda = -1$ at $z = -1$. This is **half** the limit $\gamma\Delta t \le 2$ of Heun's method, because $\mathbf{a}_{n+1}$ is reused.
+
+Applied to the model:
+
+1. **Driving-force relaxation** ($\gamma = 1/\tau$): $\Delta t \le \tau = 0.5$ s. Never the binding limit.
 2. **Body contact (stiff spring).** Two overlapping people behave like a spring of stiffness $k$ plus the slope of the exponential term at contact, $A/B$, acting on the reduced mass $m/2$. The angular frequency is
 
    $$
-   \omega = \sqrt{\frac{2(k + A/B)}{m}} = \sqrt{\frac{2(1.2\times10^5 + 2.5\times10^4)}{80}} \approx 60\ \text{rad s}^{-1}.
+   \omega = \sqrt{\frac{2(k + A/B)}{m}} = \sqrt{\frac{2(1.2\times10^5 + 2.5\times10^4)}{80}} \approx 60\ \text{rad s}^{-1},
    $$
 
-   Verlet-type schemes are stable for $\omega\,\Delta t < 2$, so $\Delta t < 0.033$ s.
-3. **Sliding friction.** The friction term damps tangential relative motion at rate $\gamma = 2\kappa\, g / m$, which grows with the overlap $g$. Explicit stability needs $\gamma\,\Delta t \lesssim 2$. For a 2 cm overlap, $\gamma = 120$ s⁻¹, so $\Delta t \lesssim 0.017$ s.
+   so $\Delta t < 2/\omega = 0.033$ s.
+3. **Sliding friction.** The friction term damps the relative sliding of two overlapping people at rate $\gamma = 2\kappa\, s / m$, which grows with the overlap $s$. Stability needs $\Delta t < m/(2\kappa s)$, **so the limit tightens as people are squeezed together**. In a dense jam ($N = 400$, $w = 0.8$ m), 99 % of overlaps are below about 1.8 cm ($\Delta t \lesssim 0.009$ s) and the deepest reach about 3 cm ($\Delta t \lesssim 0.006$ s).
 
-The production step $\Delta t = 0.01$ s satisfies all three limits with margin for typical overlaps. Two checks support this choice: a convergence study at $\Delta t$, $\Delta t/2$ and $\Delta t/4$ (V4), and a run at a deliberately too-large step that becomes unstable (V5).
+**Production step: $\Delta t = 0.005$ s.** A first draft used $\Delta t = 0.01$ s, chosen from the contact limit and Heun's friction limit, $\gamma\Delta t \lesssim 2$, which suggested $\Delta t \lesssim 0.017$ s at a 2 cm overlap. The pilot sweep then crashed at $N = 400$ with a 0.6 m exit. The per-step checks caught a person pushed through a wall, and the analysis above explains why: at 0.01 s the friction limit is broken by the deepest few per cent of contacts. At 0.005 s the limit holds for 99 % of contacts with a margin of about 2, and for the deepest contact seen with a margin of about 1.15. Three checks support the choice:
 
-*Note on convergence of a many-body system.* Crowd dynamics are chaotic: tiny differences (such as a change in $\Delta t$) eventually change the order in which people pass through an exit. Individual trajectories are therefore not expected to converge pointwise over a whole evacuation. Pointwise order is measured on the single-pedestrian test (V1, X2). For the full crowd, convergence is assessed on the **distribution** of $T_\text{evac}$ (the mean over seeds) at the three time steps (V4).
+- V5 shows that every step from 0.1 s down to 0.01 s fails in the densest case, while 0.005 s runs cleanly.
+- V4 shows that trajectories converge, and finds no detectable bias in the evacuation-time statistics against $\Delta t/2$.
+- Every production run passes the per-step checks.
+
+**Larger crowds.** At $N$ = 600–800 the crowd behind each exit pushes harder, and contacts get deeper. At 0.005 s some of these runs failed a per-step check (a person pushed through a wall), so these crowds use $\Delta t = 0.0025$ s. As a safety net, any sweep run that still fails a check is repeated with the step halved, and the step used is stored with every result (notebook §5.3). By V4b, the two steps give the same evacuation-time statistics to within a few per cent.
+
+*Note on convergence of a many-body system.* Crowd dynamics are chaotic: tiny differences (such as a change in $\Delta t$) eventually change the order in which people pass through an exit. Individual trajectories are therefore not expected to converge pointwise over a whole evacuation. Pointwise order is measured on the single-pedestrian test (V1, X2). For the full crowd, convergence is assessed in two ways (V4): trajectories over a short horizon (5 s), and the **distribution** of $T_\text{evac}$ and of the mean exit time over seeds at $2\Delta t$, $\Delta t$ and $\Delta t/2$. Over 5 s, free walkers (no contacts) converge at order 2.1. With contacts the order falls to about 1, because the contact force has a kink, $g(x) = \max(x, 0)$, where two bodies touch.
 
 ### 4.4 Monte Carlo replications and confidence intervals
 
@@ -210,14 +223,15 @@ Results are filled in from the notebook (Section 4).
 
 | ID | Check | Expected | Obtained | Pass? |
 |---|---|---|---|---|
-| V1 | Single pedestrian from rest in open space vs $v(t) = v_0(1 - e^{-t/\tau})$ | max error < $10^{-3}$ m/s at $\Delta t = 0.01$ s (predicted $8.2 \times 10^{-5}$) | speed $8.2 \times 10^{-5}$ m/s, position $6.7 \times 10^{-5}$ m; explicit Euler $5.0 \times 10^{-3}$ m/s (fails, as intended) | ✅ |
+| V1 | Single pedestrian from rest in open space vs $v(t) = v_0(1 - e^{-t/\tau})$ | max error < $2.5 \times 10^{-4}$ m/s at $\Delta t = 0.005$ s (predicted $2.1 \times 10^{-5}$) | speed $2.05 \times 10^{-5}$ m/s, position $1.7 \times 10^{-5}$ m; explicit Euler $2.5 \times 10^{-3}$ m/s (fails, as intended) | ✅ |
 | V1b | Compiled crowd step and direction lookup vs the tested Python versions | agree to $10^{-12}$ | max difference 0 (identical) over 5 s and at 5000 points | ✅ |
-| V2 | Conservation of people | $N_\text{inside} + N_\text{out} = N$ at every step of every run | holds at every step of every run (checked inside the time loop); e.g. 9356 steps for $N = 400$ | ✅ |
+| V2 | Conservation of people | $N_\text{inside} + N_\text{out} = N$ at every step of every run | holds at every step of every run (checked inside the time loop); e.g. 17 944 steps for $N = 400$ | ✅ |
 | V3 | Cell-list forces vs brute-force $O(N^2)$ forces | equal to relative tolerance $10^{-10}$ | max difference $7 \times 10^{-12}$ m s⁻² against accelerations up to $5 \times 10^4$ m s⁻² (dense crowd, 1899 interacting pairs) | ✅ |
-| V4 | Time-step convergence of mean $T_\text{evac}$ at $\Delta t$, $\Delta t/2$, $\Delta t/4$ | differences shrink; $\Delta t$ result within CI of $\Delta t/4$ | *pending* | — |
-| V5 | Stability limit | $\Delta t$ above the bound in §4.3 gives overlaps / exploding speeds | *pending* | — |
-| V6 | Plausibility of exit flow | specific flow $J_s$ within the range measured in bottleneck experiments [7], [8] | *pending* | — |
-| X2 | Convergence order (log–log, single pedestrian) | slope ≈ 2 | *pending* | — |
+| V4a | Trajectory convergence over 5 s, $\Delta t$ = 0.02 … 0.00125 s vs a $\Delta t$ = 0.0003125 s reference ($N = 100$) | free walkers: order in [1.8, 2.2]; full crowd: error falls with every halving from 0.01 s and is < 1 cm at $\Delta t$ | free walkers order 2.12; full crowd order 0.88 (contact kinks), error 0.64 cm at 0.005 s | ✅ |
+| V4b | Evacuation-time statistics at $2\Delta t$, $\Delta t$, $\Delta t/2$ ($N = 400$, $w = 1.5$ m, 10 seeds, paired) | bias of $\Delta t$ vs $\Delta t/2$ bounded below 5 % with 95 % confidence | $T_\text{evac}$: 89.7 / 89.6 / 91.2 s, bias < 3.4 %; mean exit time: 37.2 / 37.1 / 37.3 s, bias < 1.7 % | ✅ |
+| V5 | Stability limit | amplification matrix gives $\omega\Delta t \le 2$ and $\gamma\Delta t \le 1$; $\Delta t$ below both limits; too-large steps fail | limits 2.000 and 1.000; margin ×6.6 (contact), ×1.9 (friction, 99 % of contacts), ×1.15 (deepest contact); $\Delta t$ = 0.1, 0.05, 0.02, 0.01 s fail at $N = 400$, $w = 0.6$ m, 0.005 s stable | ✅ |
+| V6 | Plausibility of exit flow | mean specific flow $J_s$ in [1.3, 2.31] m⁻¹ s⁻¹ (SFPE design value to largest value in [7]) for $w \ge 1.0$ m | $J_s$ = 1.37 (1.0 m), 1.45 (1.1 m), 1.57 (1.2 m). Below the band at 0.8–0.9 m (1.19–1.21), and below the experiments of [7] (1.61–2.31) at every width, so narrow-exit results are conservative | ✅ for $w \ge 1.0$ m |
+| X2 | Error scaling on log–log axes | integrator: slope ≈ 2 (Euler ≈ 1); Monte Carlo s.e.: slope ≈ −1/2 | slopes 2.000 (Euler 1.011); measured error / predicted = 1.00; Monte Carlo slope −0.53 | ✅ |
 | X3 | Blocked exit | zero flow through the blocked exit; conservation holds | *pending* | — |
 
 ![Verification plot](figures/verification_relaxation.png)
