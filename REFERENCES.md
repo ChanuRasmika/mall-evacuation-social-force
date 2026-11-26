@@ -1,12 +1,12 @@
 # References
 
-IEEE style. The numbering matches the citations in [THEORY.md](THEORY.md) and the notebook.
+IEEE style. The numbering matches the citations in [THEORY.md](THEORY.md) and the notebook. Titles, authors (and their order), volumes, issues, pages and years were checked against the publishers' DOI records; the flow values used from [7] were checked against the paper itself.
 
 ## Pedestrian dynamics model
 
 1. D. Helbing and P. Molnár, "Social force model for pedestrian dynamics," *Phys. Rev. E*, vol. 51, no. 5, pp. 4282–4286, 1995, doi: [10.1103/PhysRevE.51.4282](https://doi.org/10.1103/PhysRevE.51.4282).
    *Used for:* the Social Force Model formulation, the desired walking-speed distribution (mean 1.34 m/s, s.d. 0.26 m/s) and the maximum speed $1.3\,v^0$.
-2. D. Helbing, I. Farkas and T. Vicsek, "Simulating dynamical features of escape panic," *Nature*, vol. 407, pp. 487–490, 2000, doi: [10.1038/35035023](https://doi.org/10.1038/35035023).
+2. D. Helbing, I. Farkas and T. Vicsek, "Simulating dynamical features of escape panic," *Nature*, vol. 407, no. 6803, pp. 487–490, 2000, doi: [10.1038/35035023](https://doi.org/10.1038/35035023).
    *Used for:* the body-compression and sliding-friction forces, and the values of $m$, $\tau$, $A$, $B$, $k$, $\kappa$ and $r_i$.
 
 ## Numerical methods
@@ -15,7 +15,7 @@ IEEE style. The numbering matches the citations in [THEORY.md](THEORY.md) and th
    *Used for:* Verlet time integration.
 4. W. C. Swope, H. C. Andersen, P. H. Berens and K. R. Wilson, "A computer simulation method for the calculation of equilibrium constants for the formation of physical clusters of molecules: Application to small water clusters," *J. Chem. Phys.*, vol. 76, no. 1, pp. 637–649, 1982, doi: [10.1063/1.442716](https://doi.org/10.1063/1.442716).
    *Used for:* the velocity form of the Verlet algorithm.
-5. M. P. Allen and D. J. Tildesley, *Computer Simulation of Liquids*, 2nd ed. Oxford, U.K.: Oxford Univ. Press, 2017.
+5. M. P. Allen and D. J. Tildesley, *Computer Simulation of Liquids*, 2nd ed. Oxford, U.K.: Oxford Univ. Press, 2017, doi: [10.1093/oso/9780198803195.001.0001](https://doi.org/10.1093/oso/9780198803195.001.0001).
    *Used for:* the cell-list neighbour search and interaction cut-offs.
 6. E. W. Dijkstra, "A note on two problems in connexion with graphs," *Numer. Math.*, vol. 1, pp. 269–271, 1959, doi: [10.1007/BF01386390](https://doi.org/10.1007/BF01386390).
    *Used for:* the node-acceptance order of the distance-map computation (fast marching extends it).
@@ -29,7 +29,7 @@ IEEE style. The numbering matches the citations in [THEORY.md](THEORY.md) and th
 
 ## Statistics and simulation methodology
 
-9. A. M. Law, *Simulation Modeling and Analysis*, 5th ed. New York, NY, USA: McGraw-Hill, 2015.
+9. A. M. Law, *Simulation Modeling and Analysis*, 5th ed. New York, NY, USA: McGraw-Hill, 2015, ISBN 978-0-07-340132-4.
    *Used for:* independent replications and t-based confidence intervals.
 
 ## Distance-map method

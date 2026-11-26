@@ -1,3 +1,34 @@
+# ---- Project: files created by running the notebook or the demo locally ----
+# Python caches (also covers Numba's cached functions, *.nbi / *.nbc)
+__pycache__/
+*.py[cod]
+*.nbi
+*.nbc
+# Jupyter / IPython run files (checkpoints, VS Code and JupyterLab scratch files)
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/*
+.virtual_documents/
+.jupyter/
+.ipython/
+# Matplotlib font cache if MPLCONFIGDIR points inside the repo
+.matplotlib/
+# Editor, assistant and OS files
+.vscode/
+.idea/
+.claude/
+*.swp
+*~
+._*
+Thumbs.db
+desktop.ini
+# Scratch files
+*.tmp
+*.bak
+nohup.out
+# Note: figures/*.png and data/*.csv are written by the notebook but are
+# deliverables, so they ARE committed on purpose.
+
+# ---- Standard Python template ----
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]

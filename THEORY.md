@@ -233,29 +233,58 @@ Results are filled in from the notebook (Section 4).
 | V6 | Plausibility of exit flow | mean specific flow $J_s$ in [1.3, 2.31] m⁻¹ s⁻¹ (SFPE design value to largest value in [7]) for $w \ge 1.0$ m | $J_s$ = 1.37 (1.0 m), 1.45 (1.1 m), 1.57 (1.2 m). Below the band at 0.8–0.9 m (1.19–1.21), and below the experiments of [7] (1.61–2.31) at every width, so narrow-exit results are conservative | ✅ for $w \ge 1.0$ m |
 | X2 | Error scaling on log–log axes | integrator: slope ≈ 2 (Euler ≈ 1); Monte Carlo s.e.: slope ≈ −1/2 | slopes 2.000 (Euler 1.011); measured error / predicted = 1.00; Monte Carlo slope −0.53 | ✅ |
 | X3 | Blocked exit | zero flow through the blocked exit; conservation holds | 180 blocked-exit runs ($N$ = 100–300, $w$ = 1.2–2.0 m): nobody out through the blocked exit, all runs cleared, $N_\text{inside} + N_\text{out} = N$ at every step | ✅ |
+| Web | JavaScript port in `docs/` vs the notebook (checked in Node.js) | distance map equal; forces equal to rounding; V1 self-test passes; 20-seed mean $T_\text{evac}$ within the summed 95 % half-widths | map identical at every node (3 layouts); forces to a relative $10^{-15}$; self-test $2.1 \times 10^{-5}$ m/s; 6 of 6 cases agree, e.g. 38.3 ± 1.0 s vs 38.8 ± 0.9 s ($N = 100$, $w = 1.5$ m) and 174.0 ± 1.9 s vs 173.6 ± 2.6 s ($N = 600$, $w = 1.25$ m) | ✅ |
 | X6 | Cost scaling of the force evaluation (1 person/m²) | cell lists $\approx O(N)$, brute force $\approx O(N^2)$; cell lists faster for $N \ge 400$ | fitted exponents 1.15 (cell lists) and 1.95 (brute force); 35× faster at $N = 1200$; compiled code about 100× faster than plain Python | ✅ |
 
 ![Verification plot](figures/verification_relaxation.png)
 
-## 6. Concepts applied
+## 6. Results
+
+From the notebook (Sections 5.3–5.8), with $R = 20$ seeds per case and 95 % confidence intervals.
+
+**Required exit width.** $w^*(N)$ is the smallest width per exit whose upper 95 % limit of $T_\text{evac}$ is at most 180 s (§1).
+
+| $N$ | $w^*$ (m, each of two exits) | Limited by | People per metre of exit |
+|---|---|---|---|
+| 100 | 1.05 | passability | 48 |
+| 200 | 1.05 | passability | 95 |
+| 300 | 1.05 | passability | 143 |
+| 400 | 1.10 | passability | 182 |
+| 500 | 1.15 | capacity | 217 |
+| 600 | 1.24 | capacity | 242 |
+| 700 | 1.33 | capacity | 263 |
+| 800 | 1.44 | capacity | 279 |
+
+- **Up to 400 people** the width is set by whether everyone can pass the door at all: at 1.0 m, 3–9 of 20 runs leave a few slow people stuck in front of the door. This floor is partly a model artefact (V6).
+- **From 500 to 800 people** the 180 s target decides. A power-law fit gives $w^* \propto N^{\alpha}$ with $\alpha = 0.46$ (bootstrap 95 % CI 0.45–0.48): the required width grows roughly like $\sqrt{N}$, **more slowly than occupancy**. The reason is that the model's specific flow grows almost in proportion to the width ($J_s/w \approx 1.3$–$1.4$ m⁻² s⁻¹), so the total flow grows like $w^2$. Bottleneck experiments [7] show a much weaker growth of $J_s$ with width, so $\alpha \approx 0.5$ is a lower bound; real exits probably need to grow somewhere between $\sqrt{N}$ and $N$.
+
+**One exit blocked** ($N$ = 100–300, $w$ = 1.2–2.0 m). Evacuation takes 1.5–1.7 times as long, not twice as long, because part of $T_\text{evac}$ is walking time. The target is still met except at $N = 300$, $w = 1.2$ m (184.5 ± 2.6 s); about 1.25 m is needed for 300 people to cope with losing an exit. Peak density at the open exit rises to at most 2.9 people/m².
+
+**Sensitivity** ($N = 600$, $w = 1.25$ m, reference 173.6 ± 2.6 s). The mean desired speed matters most: 1.0 m/s adds 68 s, 1.6 m/s saves 17 s (no faster-is-slower effect). A relaxation time of 1.0 s adds 56 s. The repulsion strength acts non-monotonically: halving $A$ adds 45 s, because bodies overlap more and friction jams the doorway. The behavioural inputs move the answer far more than Monte Carlo error (about 1 % of $T_\text{evac}$).
+
+**Cost.** One force evaluation with cell lists grows as $N^{1.15}$ against $N^{1.95}$ for the pair sum (35 times faster at 1200 people); numba compilation adds a factor of about 100 over plain Python.
+
+![Required exit width against occupancy](figures/required_width_vs_N.png)
+
+## 7. Concepts applied
 
 | Concept | Where it is used in this project |
 |---|---|
 | Particle-based simulation | Pedestrians as interacting particles with short-range pair forces; cell-list neighbour search with a derived cut-off (§3.1, §4.2) |
-| Numerical ODE solvers | Newton's equations integrated with Velocity-Verlet / Heun; stability limits from contact stiffness and friction; second-order convergence measured on a log–log plot (§4.1, §4.3) |
+| Numerical ODE solvers | Newton's equations integrated with Velocity-Verlet with a velocity predictor; stability limits from contact stiffness and friction; second-order convergence measured on a log–log plot (§4.1, §4.3) |
 | Input modelling and random variate generation | Truncated-normal desired speeds by rejection, uniform radii by inverse transform, non-overlapping random start positions (§3.3) |
 | Monte Carlo and the law of large numbers | Independent replications per scenario, t-based 95 % confidence intervals, $R^{-1/2}$ shrinking of the CI half-width (§4.4) |
 | Shortest-path computation | Fast marching solution of the eikonal equation on a grid, giving the distance field and each person's route (§3.2) |
 
-## 7. References
+## 8. References
 
 Cited here by number; full list in [REFERENCES.md](REFERENCES.md).
 
 1. D. Helbing and P. Molnár, "Social force model for pedestrian dynamics," *Phys. Rev. E*, vol. 51, no. 5, pp. 4282–4286, 1995, doi: 10.1103/PhysRevE.51.4282.
-2. D. Helbing, I. Farkas and T. Vicsek, "Simulating dynamical features of escape panic," *Nature*, vol. 407, pp. 487–490, 2000, doi: 10.1038/35035023.
+2. D. Helbing, I. Farkas and T. Vicsek, "Simulating dynamical features of escape panic," *Nature*, vol. 407, no. 6803, pp. 487–490, 2000, doi: 10.1038/35035023.
 3. L. Verlet, "Computer 'experiments' on classical fluids. I. Thermodynamical properties of Lennard-Jones molecules," *Phys. Rev.*, vol. 159, no. 1, pp. 98–103, 1967, doi: 10.1103/PhysRev.159.98.
 4. W. C. Swope, H. C. Andersen, P. H. Berens and K. R. Wilson, "A computer simulation method for the calculation of equilibrium constants for the formation of physical clusters of molecules: Application to small water clusters," *J. Chem. Phys.*, vol. 76, no. 1, pp. 637–649, 1982, doi: 10.1063/1.442716.
-5. M. P. Allen and D. J. Tildesley, *Computer Simulation of Liquids*, 2nd ed. Oxford, U.K.: Oxford Univ. Press, 2017.
+5. M. P. Allen and D. J. Tildesley, *Computer Simulation of Liquids*, 2nd ed. Oxford, U.K.: Oxford Univ. Press, 2017, doi: 10.1093/oso/9780198803195.001.0001.
 6. E. W. Dijkstra, "A note on two problems in connexion with graphs," *Numer. Math.*, vol. 1, pp. 269–271, 1959, doi: 10.1007/BF01386390.
 7. A. Seyfried, O. Passon, B. Steffen, M. Boltes, T. Rupprecht and W. Klingsch, "New insights into pedestrian flow through bottlenecks," *Transp. Sci.*, vol. 43, no. 3, pp. 395–406, 2009, doi: 10.1287/trsc.1090.0263.
 8. T. Kretz, A. Grünebohm and M. Schreckenberg, "Experimental study of pedestrian flow through a bottleneck," *J. Stat. Mech.*, vol. 2006, P10014, 2006, doi: 10.1088/1742-5468/2006/10/P10014.
