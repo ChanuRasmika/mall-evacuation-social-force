@@ -4,7 +4,8 @@
  * distance map, forces, cell lists, Velocity-Verlet with a velocity predictor and per-step checks.
  *
  * No modules: in a browser this file defines the global `MallModel`; in Node it is exported with
- * module.exports, so the same code can be tested headless (see the comment at the end of the file).
+ * module.exports, so the same code can be tested headless in Node.js, for example:
+ *   node -e "const M = require('./docs/model.js'); console.log(M.selfTest());"
  */
 (function (root) {
   "use strict";
@@ -568,6 +569,6 @@
   const api = { P: P, dtFor: dtFor, makeRng: makeRng, makeMall: makeMall, makeDistanceMap: makeDistanceMap,
                 getGeometry: getGeometry, sampleCrowd: sampleCrowd, Simulation: Simulation,
                 runEvacuation: runEvacuation, meanCI: meanCI, selfTest: selfTest, fieldDirection: fieldDirection };
-  if (typeof module !== "undefined" && module.exports) module.exports = api;   // Node: node docs/test_model.js
+  if (typeof module !== "undefined" && module.exports) module.exports = api;   // Node.js: require('./docs/model.js')
   else root.MallModel = api;                                                 // browser: global MallModel
 })(this);

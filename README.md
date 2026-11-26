@@ -2,7 +2,7 @@
 
 A Social Force Model simulation of people evacuating a shopping-mall floor, used to find how wide the exits must be to empty the floor within three minutes as the number of occupants grows.
 
-**[Live demo](https://chanurasmika.github.io/mall-evacuation-social-force/)** · [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ChanuRasmika/mall-evacuation-social-force/blob/main/notebook/mall-evacuation-social-force.ipynb)
+**[Live demo](https://chanurasmika.github.io/mall-evacuation-social-force/)** · [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1wRo2CGOUVnhi8o63iRlRsOa9wsoePZ47?usp=sharing)
 
 ![Screenshot of the web demo: 300 people queueing at the two exits of the mall floor, with live outputs, the chart of people still inside, and a 10-seed batch that agrees with the notebook](figures/demo-screenshot.png)
 
@@ -42,9 +42,9 @@ The first term drives each person towards their desired velocity along $\mathbf{
 ## Verification
 
 - **Analytic check:** one person in open space follows $v(t) = v_0(1 - e^{-t/\tau})$ with a maximum error of $2.1 \times 10^{-5}$ m/s, as predicted for the scheme; a first-order Euler control fails the same test.
-- **Error scaling:** the integrator error falls as $\Delta t^{2.00}$ and the Monte Carlo standard error as $R^{-0.53}$ on log–log plots.
+- **Error scaling:** the integrator error falls as $\Delta t^{2.00}$ and the Monte Carlo standard error as $R^{-0.50}$ on log–log plots.
 - **Built-in checks:** people are conserved and nobody passes through a wall at every step of every run; cell-list forces equal the brute-force sum to $10^{-11}$; too-large time steps are shown to fail.
-- **Plausibility:** the simulated flow through exits of 1.0–1.2 m (1.37–1.57 people per metre per second) lies between the design value of 1.3 and published bottleneck experiments [7], [8].
+- **Plausibility:** the simulated flow through exits of 1.0–1.2 m (1.34–1.60 people per metre per second) lies between the design value of 1.3 and published bottleneck experiments [7], [8].
 - **Web demo:** its JavaScript model reproduces the notebook's distance map exactly and its evacuation times statistically in six test cases.
 
 ![The simulated speed of one person matches the analytic relaxation curve; explicit Euler does not](figures/verification_relaxation.png)
